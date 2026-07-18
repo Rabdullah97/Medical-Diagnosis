@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تشخيص الأعراض — نادي الذكاء الاصطناعي والروبوت</title>
+<meta name="description" content="أداة توعوية تتعرّف على الأعراض المنطوقة بالعربية باستخدام نموذج ذكاء اصطناعي يعمل داخل المتصفح.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --user:#f07ccd;
+  --bot:#63e6e2;
+  --text:#f4eeff;
+  --muted:#9b8bc4;
+  --faint:rgba(255,255,255,.09);
+  --veil:rgba(9,3,26,.55);
+  --danger:#ff7676;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background-image: url('Mean teital.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  /* -------------------------------- */
+  background-color:#0a0418;
+  color:var(--text);
+  font-family:'Readex Pro',system-ui,sans-serif;
+  font-weight:300;
+  line-height:1.8;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+.stage{
+  max-width:660px;
+  margin:0 auto;
+  padding:clamp(104px,20vh,230px) 20px 120px;
+}
+
+/* ---------------- header ---------------- */
+.eyebrow{
+  display:block;
+  font-size:.66rem;
+  letter-spacing:.32em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:14px;
+}
+h1{
+  font-weight:200;
+  font-size:clamp(1.7rem,5.4vw,2.5rem);
+  line-height:1.35;
+  letter-spacing:-.01em;
+  margin-bottom:10px;
+}
+h1 b{font-weight:500;color:var(--bot)}
+.lede{color:var(--muted);font-size:.98rem}
+
+/* ---------------- mic ---------------- */
+.mic-zone{
+  display:flex;flex-direction:column;align-items:center;
+  padding:clamp(30px,6vw,48px) 0;
+}
+.btn-wrap{position:relative;display:inline-flex}
+
+.button{
+  background-image: url('Button.png');
+  background-size: cover;
+  color: rgb(255, 255, 255);
+  padding: 15px 55px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 25px;
+  /* ---------------------------------------------- */
+  position:relative;z-index:2;
+  transition:transform .25s cubic-bezier(.2,.9,.3,1), filter .25s;
+}
+.button:hover{transform:translateY(-3px) scale(1.04);filter:brightness(1.15)}
+.button:active{transform:scale(.97)}
+.button:focus-visible{outline:2px solid var(--bot);outline-offset:8px}
+
+/* listening rings expand from behind the artwork, never across it */
+.btn-wrap::before,.btn-wrap::after{
+  content:"";position:absolute;inset:-14px;
+  border-radius:20px;border:1.5px solid var(--bot);
+  opacity:0;pointer-events:none;
+}
+.btn-wrap.on::before{animation:ring 2s ease-out infinite}
+.btn-wrap.on::after{animation:ring 2s ease-out .9s infinite}
+@keyframes ring{
+  0%{opacity:.6;transform:scale(.95)}
+  100%{opacity:0;transform:scale(1.4)}
+}
+
+.mic-hint{
+  margin-top:20px;font-size:.9rem;color:var(--muted);
+  letter-spacing:.02em;transition:color .3s;text-align:center;
+}
+.mic-hint.on{color:var(--bot)}
+
+/* ---------------- conversation thread ---------------- */
+.thread{display:grid;gap:26px}
+.thread:empty{display:none}
+
+.turn{
+  position:relative;
+  padding-right:26px;
+  border-right:1px solid var(--faint);
+  animation:enter .45s cubic-bezier(.2,.85,.3,1) both;
+}
+.turn::before{
+  content:"";position:absolute;top:.72em;right:-4.5px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--bot);box-shadow:0 0 0 4px var(--veil);
+}
+.turn.said::before{background:var(--user)}
+.turn.alert::before{background:var(--danger)}
+@keyframes enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+.label{
+  font-size:.64rem;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:7px;
+}
+.said .quote{
+  font-size:1.22rem;font-weight:300;color:var(--user);line-height:1.6;
+}
+
+/* ---------------- answer ---------------- */
+.answer-name{font-size:1.32rem;font-weight:500;color:var(--bot);margin-bottom:14px}
+.answer dl{display:grid;gap:14px}
+.answer dt{
+  font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:2px;
+}
+.answer dd{margin:0;font-size:1rem;color:#e2d9f7}
+
+.meter{margin-top:18px}
+.meter-top{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:7px}
+.meter-bar{height:3px;background:var(--faint);border-radius:2px;overflow:hidden}
+.meter-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--user),var(--bot));
+  transition:width .7s cubic-bezier(.2,.9,.3,1);
+}
+.meter-note{margin-top:9px;font-size:.72rem;color:var(--muted)}
+
+/* emergency turn */
+.turn.alert{border-right-color:var(--danger)}
+.turn.alert .answer-name{color:var(--danger)}
+.turn.alert dd{color:#ffdcdc}
+.call{
+  display:inline-flex;align-items:center;gap:9px;margin-top:18px;
+  padding:12px 24px;border-radius:12px;
+  background:var(--danger);color:#2b0508;
+  font-weight:600;font-size:1.05rem;text-decoration:none;
+  transition:transform .2s,box-shadow .2s;
+}
+.call:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(255,118,118,.32)}
+
+/* ---------------- browse conditions ---------------- */
+.browse{margin-top:58px;padding-top:26px;border-top:1px solid var(--faint)}
+.browse-head{
+  font-size:.64rem;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{
+  font-family:inherit;font-size:.94rem;font-weight:300;
+  padding:9px 18px;border-radius:999px;cursor:pointer;
+  background:transparent;color:var(--text);
+  border:1px solid var(--faint);
+  transition:border-color .22s,background .22s,color .22s,transform .22s;
+}
+.chip:hover{border-color:var(--bot);color:var(--bot);transform:translateY(-2px)}
+.chip[aria-pressed="true"]{background:var(--bot);border-color:var(--bot);color:#04212a;font-weight:400}
+.chip:focus-visible{outline:2px solid var(--bot);outline-offset:3px}
+
+#diagnosis-details{margin-top:20px}
+#diagnosis-details:empty{display:none}
+.detail{
+  padding-right:26px;border-right:1px solid var(--faint);
+  animation:enter .4s cubic-bezier(.2,.85,.3,1) both;
+}
+.detail .answer-name{font-size:1.15rem;margin-bottom:12px}
+.detail dl{display:grid;gap:14px}
+.detail dt{
+  font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:2px;
+}
+.detail dd{margin:0;font-size:1rem;color:#e2d9f7}
+
+/* ---------------- typed input ---------------- */
+#typeBox{
+  margin-top:22px;padding:14px 20px;width:100%;max-width:400px;
+  font-family:inherit;font-size:1rem;text-align:center;color:var(--text);
+  background:transparent;border:0;border-bottom:1px solid var(--faint);
+  transition:border-color .25s;
+}
+#typeBox::placeholder{color:var(--muted)}
+#typeBox:focus{outline:none;border-bottom-color:var(--bot)}
+
+/* ---------------- status pill ---------------- */
+#modelStatus{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:9px;z-index:60;
+  padding:7px 16px;border-radius:999px;white-space:nowrap;
+  background:rgba(10,4,24,.86);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid var(--faint);
+  color:var(--muted);font-size:.76rem;
+  transition:opacity .5s,transform .5s;
+}
+#modelStatus.gone{opacity:0;transform:translateX(-50%) translateY(-16px);pointer-events:none}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--bot);flex:none;animation:blink 1.6s ease-in-out infinite}
+#modelStatus.done .dot{animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ---------------- footer note ---------------- */
+.disclaimer{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  padding:30px 16px 12px;text-align:center;
+  font-size:.72rem;color:var(--muted);
+  background:linear-gradient(transparent,rgba(6,2,18,.94) 45%);
+}
+.disclaimer b{color:#ffb0b0;font-weight:400}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="modelStatus"><span class="dot"></span><span id="statusText">جاري تحميل نموذج الذكاء الاصطناعي</span></div>
+
+<div class="stage">
+
+  <header>
+    <span class="eyebrow">Diagnosing symptoms &amp; diseases</span>
+    <h1>تحدّث بما تشعر به، <b>وسأحاول أن أفهم</b></h1>
+    <p class="lede">أداة توعوية من نادي الذكاء الاصطناعي والروبوت</p>
+  </header>
+
+  <div class="mic-zone">
+    <span class="btn-wrap" id="btnWrap">
+      <button class="button" onclick="startRecognition()" aria-label="ابدأ الإدخال الصوتي">&nbsp;</button>
+    </span>
+    <p class="mic-hint" id="micHint">اضغط الزر وتحدّث</p>
+  </div>
+
+  <div class="thread" id="thread" aria-live="polite"></div>
+
+  <section class="browse">
+    <div class="browse-head">أو تصفّح الحالات الشائعة</div>
+    <div class="chips" id="diseaseList">
+      <button class="chip" aria-pressed="false" onclick="showDiagnosis('صداع')">صداع</button>
+      <button class="chip" aria-pressed="false" onclick="showDiagnosis('إنفلونزا')">إنفلونزا</button>
+      <button class="chip" aria-pressed="false" onclick="showDiagnosis('ارتجاع معدي')">ارتجاع معدي</button>
+      <button class="chip" aria-pressed="false" onclick="showDiagnosis('التهاب رئوي')">التهاب رئوي</button>
+      <button class="chip" aria-pressed="false" onclick="showDiagnosis('حصى الكلى')">حصى الكلى</button>
+    </div>
+    <div id="diagnosis-details"></div>
+  </section>
+
+</div>
+
+<div class="disclaimer">
+  أداة توعوية تعليمية — ليست تشخيصاً طبياً ولا بديلاً عن الطبيب · للطوارئ اتصل بـ <b>997</b>
+</div>
+
+<script>
+
+
+const RED_FLAGS = [
+  "ألم في الصدر","الم في الصدر","ألم بالصدر","وجع في صدري","صدري يوجعني",
+  "ضيق في التنفس","ضيق تنفس","ما اقدر اتنفس","ما أقدر أتنفس","صعوبة في التنفس",
+  "خدر","شلل","تنميل في الوجه","تلعثم","ما اقدر اتكلم",
+  "نزيف","اغماء","إغماء","فقدت الوعي","تشنج"
+];
+
+const INFO = {
+  "ارتفاع الحرارة":{ keys:["حمى","سخونة","حرارة","قشعريرة"],
+    d:"قد يصاحب عدوى فيروسية أو بكتيرية.",
+    c:"الراحة وشرب السوائل. راجع الطبيب إذا تجاوزت 39 مئوية أو استمرت أكثر من ثلاثة أيام." },
+  "ألم البطن":{ keys:["بطن","بطني","معدة","معدتي","مغص"],
+    d:"قد يرتبط بعسر الهضم أو التهاب المعدة.",
+    c:"تجنّب الأطعمة الدسمة واشرب الماء. راجع الطبيب إذا كان الألم شديداً أو مستمراً." },
+  "الغثيان":{ keys:["غثيان","اتقيأ","أتقيأ","استفراغ","ترجيع"],
+    d:"قد ينتج عن اضطراب المعدة أو دوار الحركة.",
+    c:"وجبات خفيفة وسوائل بكميات صغيرة. راجع الطبيب إذا منعك من شرب الماء." },
+  "السعال":{ keys:["سعال","كحة","أسعل","بلغم"],
+    d:"شائع مع نزلات البرد والتهاب الشعب الهوائية.",
+    c:"سوائل دافئة وراحة. راجع الطبيب إذا استمر أكثر من أسبوعين أو صاحبه دم." },
+  "الصداع":{ keys:["صداع","رأسي","راسي","رأس"],
+    d:"غالباً مرتبط بالإجهاد أو قلة النوم أو الجفاف.",
+    c:"راحة وترطيب. راجع الطبيب إذا كان مفاجئاً وشديداً أو مصحوباً بحمى." },
+  "التهاب الحلق":{ keys:["حلق","حلقي","بلع","حنجرة"],
+    d:"غالباً عدوى فيروسية، وأحياناً بكتيرية.",
+    c:"سوائل دافئة وراحة للصوت. راجع الطبيب إذا صاحبه حمى عالية أو صعوبة بالبلع." },
+  "آلام المفاصل":{ keys:["مفاصل","ركبة","ركبتي","أوجاع","تيبّس"],
+    d:"قد يرتبط بالإجهاد أو التهاب المفاصل.",
+    c:"راحة وكمادات. راجع الطبيب إذا صاحبه تورّم أو احمرار." },
+};
+
+const DISEASES = {
+  "صداع":{d:"مشكلة شائعة قد تكون بسبب الإجهاد أو قلة النوم.",s:"ألم في الرأس، حساسية للضوء.",c:"الراحة وشرب الماء. راجع الطبيب إذا تكرر بشدة."},
+  "إنفلونزا":{d:"عدوى فيروسية تصيب الجهاز التنفسي.",s:"حمى، سعال، تعب عام.",c:"الراحة والسوائل. راجع الطبيب عند صعوبة التنفس."},
+  "ارتجاع معدي":{d:"ارتداد الأحماض من المعدة إلى المريء.",s:"حرقة، ألم خلف عظمة الصدر.",c:"تجنّب الأطعمة الحارة والوجبات المتأخرة. الأعراض قد تشبه مشاكل القلب — راجع الطبيب للتفريق."},
+  "التهاب رئوي":{d:"التهاب يصيب الرئتين بسبب عدوى.",s:"سعال ببلغم، حمى، صعوبة في التنفس.",c:"يحتاج تقييماً طبياً. راجع الطبيب دون تأخير."},
+  "حصى الكلى":{d:"تكوّن ترسبات صلبة في الكلى.",s:"ألم في الخاصرة، ألم عند التبول.",c:"الإكثار من الماء. الألم الشديد أو الدم في البول يستدعي مراجعة فورية."}
+};
+
+const statusBar  = document.getElementById("modelStatus");
+const statusText = document.getElementById("statusText");
+const thread     = document.getElementById("thread");
+const btnWrap    = document.getElementById("btnWrap");
+const micHint    = document.getElementById("micHint");
+
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------------- conversation turns ---------------- */
+function clearThread(){ thread.innerHTML = ""; }
+
+function addSaid(text){
+  const el = document.createElement("div");
+  el.className = "turn said";
+  el.innerHTML = `<span class="label">قلت</span><p class="quote">${esc(text)}</p>`;
+  thread.appendChild(el);
+}
+
+function replaceAnswer(el){
+  const old = thread.querySelector('[data-role="answer"]');
+  if (old) old.remove();
+  thread.appendChild(el);
+}
+
+function addAnswer(name, score){
+  const x = INFO[name];
+  const el = document.createElement("div");
+  el.className = "turn answer";
+  el.dataset.role = "answer";
+  el.innerHTML = `
+    <span class="label">الأقرب لما وصفت</span>
+    <p class="answer-name">${name}</p>
+    <dl>
+      <div><dt>ما قد يكون</dt><dd>${x.d}</dd></div>
+      <div><dt>ما يمكن فعله</dt><dd>${x.c}</dd></div>
+    </dl>
+    ${score != null ? `
+    <div class="meter">
+      <p class="meter-note">تقدير آلي وليس تشخيصاً طبياً</p>
+    </div>` : ``}`;
+  replaceAnswer(el);
+}
+
+function addEmergency(){
+  const el = document.createElement("div");
+  el.className = "turn answer alert";
+  el.dataset.role = "answer";
+  el.innerHTML = `
+    <span class="label">تنبيه</span>
+    <p class="answer-name">راجع الطوارئ الآن</p>
+    <dl><div><dt>لماذا</dt>
+      <dd>ما ذكرته قد يكون علامة على حالة تستدعي تدخلاً عاجلاً. لا تعتمد على هذه الأداة ولا تنتظر.</dd></div></dl>
+    <a class="call" href="tel:997">اتصل بالإسعاف 997</a>`;
+  replaceAnswer(el);
+}
+
+function addUnknown(){
+  const el = document.createElement("div");
+  el.className = "turn answer";
+  el.dataset.role = "answer";
+  el.innerHTML = `
+    <span class="label">لم أفهم</span>
+    <p class="answer-name">لم أتعرّف على العرض</p>
+    <dl><div><dt>ماذا الآن</dt>
+      <dd>أتعرّف حالياً على عدد محدود من الأعراض الشائعة. إذا كنت تشعر بتوعّك، راجع الطبيب.</dd></div></dl>`;
+  replaceAnswer(el);
+}
+
+/* ---------------- the model, on its own thread ---------------- */
+let worker = null, modelReady = false, lastText = "";
+
+function setStatus(text, done){
+  statusText.textContent = text;
+  if (done) statusBar.classList.add("done");
+}
+
+try {
+  worker = new Worker("matcher.worker.js", { type: "module" });
+  worker.postMessage({ type: "init" });
+
+  worker.onmessage = ({ data }) => {
+    if (data.type === "progress"){
+      setStatus(`تحميل نموذج الذكاء الاصطناعي ${data.percent}%`);
+    } else if (data.type === "ready"){
+      modelReady = true;
+      setStatus("النموذج جاهز — يعمل داخل متصفحك", true);
+      setTimeout(() => statusBar.classList.add("gone"), 2600);
+    } else if (data.type === "failed"){
+      setStatus("المطابقة النصية مفعّلة", true);
+      setTimeout(() => statusBar.classList.add("gone"), 3000);
+    } else if (data.type === "result"){
+      if (data.ready && data.score > 0.45) addAnswer(data.name, data.score);
+      else if (!keywordMatch(lastText)) addUnknown();
+    }
+  };
+} catch {
+  setStatus("المطابقة النصية مفعّلة", true);
+  setTimeout(() => statusBar.classList.add("gone"), 3000);
+}
+
+/* ---------------- matching ---------------- */
+function keywordMatch(text){
+  for (const [name, x] of Object.entries(INFO)){
+    if (x.keys.some(k => text.includes(k))){ addAnswer(name, null); return true; }
+  }
+  return false;
+}
+
+function analyse(text){
+  lastText = text;
+  if (RED_FLAGS.some(f => text.includes(f))) return addEmergency();
+
+  const hit = keywordMatch(text);
+  if (modelReady && worker) worker.postMessage({ type: "match", text });
+  else if (!hit) addUnknown();
+}
+
+/* ---------------- speech ---------------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+
+function idle(msg){
+  btnWrap.classList.remove("on");
+  micHint.classList.remove("on");
+  micHint.textContent = msg || "اضغط الزر وتحدّث";
+}
+
+if (SR){
+  recognition = new SR();
+  recognition.lang = "ar-SA";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    clearThread();
+    addSaid(text);
+    analyse(text);
+  };
+  recognition.onerror = e => {
+    idle(e.error === "not-allowed"
+      ? "لم يُسمح باستخدام الميكروفون — فعّله من إعدادات المتصفح"
+      : "لم يتم التعرف على الصوت، حاول مرة أخرى");
+  };
+  recognition.onend = () => {
+    if (micHint.textContent === "أستمع…") idle("لم أسمع شيئاً، حاول مرة أخرى");
+    else idle();
+  };
+} else {
+  showTextFallback();
+}
+
+function startRecognition(){
+  if (!recognition) return showTextFallback();
+  btnWrap.classList.add("on");
+  micHint.classList.add("on");
+  micHint.textContent = "أستمع…";
+  try { recognition.start(); } catch {}
+}
+
+function showTextFallback(){
+  if (document.getElementById("typeBox")) return;
+  const box = document.createElement("input");
+  box.id = "typeBox";
+  box.type = "text";
+  box.placeholder = "اكتب ما تشعر به…";
+  box.setAttribute("aria-label", "اكتب العرض");
+  box.addEventListener("keydown", e => {
+    if (e.key === "Enter" && box.value.trim()){
+      clearThread();
+      addSaid(box.value.trim());
+      analyse(box.value.trim());
+    }
+  });
+  document.querySelector(".mic-zone").appendChild(box);
+  micHint.textContent = "متصفحك لا يدعم الإدخال الصوتي — اكتب بالأسفل";
+}
+
+/* ---------------- browse conditions ---------------- */
+function showDiagnosis(name){
+  const x = DISEASES[name];
+  document.querySelectorAll("#diseaseList .chip").forEach(c =>
+    c.setAttribute("aria-pressed", c.textContent.trim() === name));
+
+  document.getElementById("diagnosis-details").innerHTML = x ? `
+    <div class="detail">
+      <p class="answer-name">${name}</p>
+      <dl>
+        <div><dt>وصف</dt><dd>${x.d}</dd></div>
+        <div><dt>الأعراض</dt><dd>${x.s}</dd></div>
+        <div><dt>ما يمكن فعله</dt><dd>${x.c}</dd></div>
+      </dl>
+    </div>` : "";
+}
+</script>
+</body>
+</html>
