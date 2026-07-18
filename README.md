@@ -53,7 +53,7 @@ Voice-based symptom input and AI-assisted diagnosis results.
 
 ## Running 
 
-
+https://rabdullah97.github.io/Medical-Diagnosis/
 
 ---
 
